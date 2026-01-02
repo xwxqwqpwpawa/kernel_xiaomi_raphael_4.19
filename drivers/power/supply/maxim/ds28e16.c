@@ -41,7 +41,6 @@ struct ds28e16_data {
 	struct device *dev;
 
 	int version;
-	int cycle_count;
 
 	struct power_supply *verify_psy;
 	struct power_supply_desc verify_psy_d;
@@ -1132,15 +1131,12 @@ static enum power_supply_property verify_props[] = {
 	POWER_SUPPLY_PROP_PAGE1_DATA,
 	POWER_SUPPLY_PROP_VERIFY_MODEL_NAME,
 	POWER_SUPPLY_PROP_CHIP_OK,
-	POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT,
 };
 
 static int verify_get_property(struct power_supply *psy,
 			       enum power_supply_property psp,
 			       union power_supply_propval *val)
 {
-	struct ds28e16_data *data = power_supply_get_drvdata(psy);
-	unsigned char pagedata[16] = {0x00};
 	int ret;
 	unsigned char buf[50];
 
@@ -1206,14 +1202,6 @@ static int verify_get_property(struct power_supply *psy,
 		if (ret != DS_TRUE)
 			return -EAGAIN;
 		break;
-	case POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT:
-		ret = ds28el16_get_page_data_retry(DC_PAGE, pagedata);
-		if (ret == DS_TRUE) {
-			data->cycle_count = (pagedata[2] << 16) + (pagedata[1] << 8)
-						+ pagedata[0];
-			val->intval = DC_INIT_VALUE - data->cycle_count;
-		}
-		break;
 	default:
 		ds_err("unsupported property %d\n", psp);
 		return -ENODATA;
@@ -1256,9 +1244,6 @@ static int verify_set_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_AUTH_BDCONST:
 		auth_BDCONST = val->intval;
 		break;
-	case POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT:
-		DS28E16_cmd_decrementCounter();
-		break;
 	default:
 		ds_err("unsupported property %d\n", prop);
 		return -ENODATA;
@@ -1280,7 +1265,6 @@ static int verify_prop_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CHALLENGE:
 	case POWER_SUPPLY_PROP_AUTH_ANON:
 	case POWER_SUPPLY_PROP_AUTH_BDCONST:
-	case POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT:
 		ret = 1;
 		break;
 	default:

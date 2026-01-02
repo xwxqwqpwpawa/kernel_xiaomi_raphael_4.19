@@ -65,8 +65,6 @@
 
 #define ANONYMOUS 1
 
-#define DC_INIT_VALUE			0x1FFFF
-
 //retry times config
 #define SET_SRAM_RETRY 4
 #define GET_USER_MEMORY_RETRY 8
