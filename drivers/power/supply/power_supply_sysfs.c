@@ -222,58 +222,45 @@ static ssize_t power_supply_show_property(struct device *dev,
 	case POWER_SUPPLY_PROP_WIRELESS_VERSION:
 		ret = scnprintf(buf, PAGE_SIZE, "0x%x\n",
 				value.intval);
-		break;
 	case POWER_SUPPLY_PROP_WIRELESS_WAKELOCK:
 		ret = scnprintf(buf, PAGE_SIZE, "%d\n",
 				value.intval);
-		break;
 	case POWER_SUPPLY_PROP_SIGNAL_STRENGTH:
 		ret = scnprintf(buf, PAGE_SIZE, "%d\n",
 				value.intval);
-		break;
 	case POWER_SUPPLY_PROP_WIRELESS_CP_EN:
 		ret = scnprintf(buf, PAGE_SIZE, "%d\n",
 				value.intval);
-		break;
 	case POWER_SUPPLY_PROP_TYPE_RECHECK:
 		ret = scnprintf(buf, PAGE_SIZE, "0x%x\n",
 				value.intval);
-		break;
 #if defined(CONFIG_MACH_XIAOMI_VAYU) || defined(CONFIG_MACH_XIAOMI_NABU)
 	case POWER_SUPPLY_PROP_TX_MAC:
 		ret = scnprintf(buf, PAGE_SIZE, "%llx\n",
 				value.int64val);
-		break;
 #ifdef CONFIG_MACH_XIAOMI_NABU
 	case POWER_SUPPLY_PROP_PEN_MAC:
 		ret = scnprintf(buf, PAGE_SIZE, "%llx\n",
 				value.int64val);
-		break;
 	case POWER_SUPPLY_PROP_REVERSE_PEN_SOC:
 		ret = scnprintf(buf, PAGE_SIZE, "%d\n",
 				value.intval);
-		break;
 	case POWER_SUPPLY_PROP_REVERSE_CHG_STATE:
 		ret = scnprintf(buf, PAGE_SIZE, "%d\n",
 				value.intval);
-		break;
 	case POWER_SUPPLY_PROP_REVERSE_PEN_CHG_STATE:
 		ret = scnprintf(buf, PAGE_SIZE, "%d\n",
 				value.intval);
-		break;
 #endif
 	case POWER_SUPPLY_PROP_RX_CR:
 		ret = scnprintf(buf, PAGE_SIZE, "%llx\n",
 				value.int64val);
-		break;
 	case POWER_SUPPLY_PROP_RX_CEP:
 		ret = scnprintf(buf, PAGE_SIZE, "%llx\n",
 				value.int64val);
-		break;
 	case POWER_SUPPLY_PROP_BT_STATE:
 		ret = scnprintf(buf, PAGE_SIZE, "%x\n",
 				value.intval);
-		break;
 #endif
 #endif
 #if defined(CONFIG_MACH_XIAOMI_VAYU) || defined(CONFIG_MACH_XIAOMI_NABU)
@@ -282,7 +269,6 @@ static ssize_t power_supply_show_property(struct device *dev,
 		ret = scnprintf(buf, PAGE_SIZE, "%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x\n",
 			value.arrayval[0], value.arrayval[1], value.arrayval[2], value.arrayval[3],
 			value.arrayval[4], value.arrayval[5], value.arrayval[6], value.arrayval[7]);
-		break;
 	case POWER_SUPPLY_PROP_PAGE0_DATA:
 	case POWER_SUPPLY_PROP_PAGE1_DATA:
 	case POWER_SUPPLY_PROP_PAGEDATA:
@@ -291,14 +277,11 @@ static ssize_t power_supply_show_property(struct device *dev,
 			value.arrayval[4], value.arrayval[5], value.arrayval[6], value.arrayval[7],
 			value.arrayval[8], value.arrayval[9], value.arrayval[10], value.arrayval[11],
 			value.arrayval[12], value.arrayval[13], value.arrayval[14], value.arrayval[15]);
-		break;
+	case POWER_SUPPLY_PROP_VERIFY_MODEL_NAME:
 #endif
 	case POWER_SUPPLY_PROP_CHARGE_COUNTER_EXT:
 		ret = sprintf(buf, "%lld\n", value.int64val);
 		break;
-#if defined(CONFIG_MACH_XIAOMI_VAYU) || defined(CONFIG_MACH_XIAOMI_NABU)
-	case POWER_SUPPLY_PROP_VERIFY_MODEL_NAME:
-#endif
 	case POWER_SUPPLY_PROP_MODEL_NAME ... POWER_SUPPLY_PROP_SERIAL_NUMBER:
 		ret = sprintf(buf, "%s\n", value.strval);
 		break;
