@@ -277,7 +277,6 @@ static ssize_t doze_brightness_show(struct device *device,
 			dev->doze_brightness);
 }
 
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 static ssize_t doze_backlight_store(struct device *device,
 			   struct device_attribute *attr,
 			   const char *buf, size_t count)
@@ -301,7 +300,6 @@ static ssize_t doze_backlight_show(struct device *dev,
 	struct drm_connector *connector = to_drm_connector(dev);
 	return dsi_bridge_disp_get_doze_backlight(connector, buf);
 }
-#endif
 
 void drm_bridge_disp_param_set(struct drm_bridge *bridge, int cmd);
 static ssize_t disp_param_store(struct device *device,
@@ -334,7 +332,8 @@ static ssize_t disp_param_store(struct device *device,
 	return count;
 }
 
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
+
+
 extern ssize_t get_fod_ui_status(struct drm_connector *connector);
 static ssize_t fod_ui_ready_show(struct device *device,
 			   struct device_attribute *attr,
@@ -394,81 +393,6 @@ static ssize_t dim_layer_enable_show(struct device *device,
 static DEVICE_ATTR_RW(dim_layer_enable);
 static DEVICE_ATTR(dim_alpha, S_IRUGO|S_IWUSR, NULL, xm_fod_dim_layer_alpha_store);
 #endif
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-extern ssize_t mipi_reg_write(char *buf, size_t count);
-extern ssize_t mipi_reg_read(char *buf);
-
-static ssize_t mipi_reg_show(struct device *device,
-			    struct device_attribute *attr,
-			   char *buf)
-{
-	return mipi_reg_read(buf);
-}
-
-static ssize_t mipi_reg_store(struct device *device,
-			   struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	int rc = 0;
-
-	rc = mipi_reg_write((char *)buf, count);
-	return rc;
-}
-
-void drm_bridge_disp_count_set(struct drm_bridge *bridge, const char *buf);
-static ssize_t disp_count_store(struct device *device,
-			   struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	struct drm_connector *connector = NULL;
-	struct drm_encoder *encoder = NULL;
-	struct drm_bridge *bridge = NULL;
-
-	connector = to_drm_connector(device);
-	if (!connector)
-		return count;
-
-	encoder = connector->encoder;
-	if (!encoder)
-		return count;
-
-	bridge = encoder->bridge;
-	if (!bridge)
-		return count;
-
-	drm_bridge_disp_count_set(bridge, buf);
-
-	return count;
-}
-
-ssize_t drm_bridge_disp_count_get(struct drm_bridge *bridge, char *buf);
-static ssize_t disp_count_show(struct device *device,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	ssize_t ret = 0;
-	struct drm_connector *connector = NULL;
-	struct drm_encoder *encoder = NULL;
-	struct drm_bridge *bridge = NULL;
-
-	connector = to_drm_connector(device);
-	if (!connector)
-		return ret;
-
-	encoder = connector->encoder;
-	if (!encoder)
-		return ret;
-
-	bridge = encoder->bridge;
-	if (!bridge)
-		return ret;
-
-	ret = drm_bridge_disp_count_get(bridge, buf);
-
-	return ret;
-}
-#endif
-#endif
 static DEVICE_ATTR_RW(status);
 static DEVICE_ATTR_RO(enabled);
 static DEVICE_ATTR_RO(dpms);
@@ -477,14 +401,8 @@ static DEVICE_ATTR_RO(modes);
 static DEVICE_ATTR_RO(panel_info);
 static DEVICE_ATTR_WO(disp_param);
 static DEVICE_ATTR_RO(doze_brightness);
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 static DEVICE_ATTR_RW(doze_backlight);
 static DEVICE_ATTR_RO(fod_ui_ready);
-#endif
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-static DEVICE_ATTR_RW(mipi_reg);
-static DEVICE_ATTR_RW(disp_count);
-#endif
 #endif
 
 static struct attribute *connector_dev_attrs[] = {
@@ -496,16 +414,10 @@ static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_panel_info.attr,
 	&dev_attr_disp_param.attr,
 	&dev_attr_doze_brightness.attr,
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	&dev_attr_doze_backlight.attr,
 	&dev_attr_dim_alpha.attr,
 	&dev_attr_fod_ui_ready.attr,
 	&dev_attr_dim_layer_enable.attr,
-#endif
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	&dev_attr_mipi_reg.attr,
-	&dev_attr_disp_count.attr,
-#endif
 #endif
 	NULL
 };

@@ -45,17 +45,7 @@ enum backlight_type {
 enum backlight_notification {
 	BACKLIGHT_REGISTERED,
 	BACKLIGHT_UNREGISTERED,
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	BACKLIGHT_UPDATED,
-#endif
 };
-
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-enum backlight_brightness {
-	BACKLIGHT_OFF,
-	BACKLIGHT_ON,
-};
-#endif
 
 struct backlight_device;
 struct fb_info;
@@ -79,9 +69,6 @@ struct backlight_ops {
 struct backlight_properties {
 	/* Current User requested brightness (0 - max_brightness) */
 	int brightness;
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	int brightness_clone;
-#endif
 	/* Maximal value for brightness (read-only) */
 	int max_brightness;
 	/* Current FB Power mode (0: full on, 1..3: power saving

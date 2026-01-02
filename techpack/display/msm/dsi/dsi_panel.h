@@ -430,8 +430,4 @@ int dsi_panel_write_cmd_set(struct dsi_panel *panel, struct dsi_panel_cmd_set *c
 int dsi_panel_read_cmd_set(struct dsi_panel *panel, struct dsi_read_config *read_config);
 #endif
 
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-int dsi_panel_enable_doze_backlight(struct dsi_panel *panel, u32 bl_lvl);
-#endif
-
 #endif /* _DSI_PANEL_H_ */

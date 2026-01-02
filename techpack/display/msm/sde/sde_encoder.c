@@ -4985,7 +4985,7 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 		sde_configure_qdss(sde_enc, sde_enc->cur_master->hw_qdss,
 				sde_enc->cur_master, sde_kms->qdss_enabled);
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 	if (sde_enc->cur_master && sde_enc->cur_master->connector) {
 		struct sde_connector *c_conn;
 		c_conn = to_sde_connector(sde_enc->cur_master->connector);

@@ -52,11 +52,6 @@ static struct dsi_panel *g_panel;
 int dsi_display_read_panel(struct dsi_panel *panel, struct dsi_read_config *read_config);
 #endif
 
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-static int string_merge_into_buf(const char *str, int len, char *buf);
-static struct dsi_read_config read_reg;
-#endif
-
 enum dsi_dsc_ratio_type {
 	DSC_8BPC_8BPP,
 	DSC_10BPC_8BPP,
@@ -475,7 +470,7 @@ static int dsi_panel_power_on(struct dsi_panel *panel)
 {
 	int rc = 0;
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 	if (panel->is_tddi_flag) {
 		if (!panel->tddi_doubleclick_flag || panel->panel_dead_flag) {
 			rc = dsi_pwr_enable_regulator(&panel->power_info, true);
@@ -537,7 +532,7 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 	if (panel->is_tddi_flag) {
 		if (!panel->tddi_doubleclick_flag || panel->panel_dead_flag) {
 			if (gpio_is_valid(panel->reset_config.reset_gpio))
@@ -569,7 +564,7 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 		       rc);
 	}
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 	if (panel->is_tddi_flag) {
 		if(!panel->tddi_doubleclick_flag || panel->panel_dead_flag) {
 			rc = dsi_pwr_enable_regulator(&panel->power_info, false);
@@ -806,7 +801,7 @@ error:
 	return rc;
 }
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 int dsi_panel_set_doze_backlight(struct dsi_display *display)
 {
 	int rc = 0;
@@ -886,65 +881,6 @@ ssize_t dsi_panel_get_doze_backlight(struct dsi_display *display, char *buf)
 
 	return rc;
 }
-#elif defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-int dsi_panel_set_doze_backlight(struct dsi_display *display, u32 bl_lvl)
-{
-	int rc = 0;
-	struct dsi_panel *panel = NULL;
-	struct drm_device *drm_dev = NULL;
-
-	if (!display || !display->panel || !display->drm_dev) {
-		pr_err("invalid display/panel/drm_dev\n");
-		return -EINVAL;
-	}
-	panel = display->panel;
-	drm_dev = display->drm_dev;
-
-	if (panel->fod_hbm_enabled || panel->fod_backlight_flag) {
-		pr_info("%s FOD HBM open, skip value:%u [hbm=%d][fod_bl=%d]\n", __func__,
-			bl_lvl, panel->fod_hbm_enabled, panel->fod_backlight_flag);
-		return rc;
-	}
-
-	if (bl_lvl > panel->doze_backlight_threshold) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DOZE_HBM);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DOZE_HBM cmd, rc=%d\n",
-				   panel->name, rc);
-		drm_dev->doze_brightness = DOZE_BRIGHTNESS_HBM;
-		panel->in_aod = true;
-		panel->skip_dimmingon = STATE_DIM_BLOCK;
-	} else if (bl_lvl <= panel->doze_backlight_threshold && bl_lvl > 0) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DOZE_LBM);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DOZE_LBM cmd, rc=%d\n",
-			       panel->name, rc);
-		drm_dev->doze_brightness = DOZE_BRIGHTNESS_LBM;
-		panel->in_aod = true;
-		panel->skip_dimmingon = STATE_DIM_BLOCK;
-	} else {
-		drm_dev->doze_brightness = DOZE_BRIGHTNESS_INVALID;
-	}
-
-	pr_info("%s value:%u\n", __func__, drm_dev->doze_brightness);
-	return rc;
-}
-
-int dsi_panel_enable_doze_backlight(struct dsi_panel *panel, u32 bl_lvl)
-{
-	int rc = 0;
-	struct dsi_backlight_config *bl = &panel->bl_config;
-
-	if (panel->fod_backlight_flag) {
-		pr_info("fod_backlight_flag set\n");
-	} else {
-		pr_debug("enable doze backlight type:%d lvl:%d\n", bl->type, bl_lvl);
-		rc = dsi_panel_update_backlight(panel, bl_lvl);
-	}
-
-	panel->last_bl_lvl = bl_lvl;
-	return rc;
-}
 #endif
 
 int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
@@ -960,7 +896,7 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 
 	DSI_DEBUG("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 	if (0 == bl_lvl) {
 		if(panel->fod_dimlayer_hbm_enabled){
 			pr_info("skip set backlight=0 bacase fod_dimlayer_hbm_enabled enable");
@@ -992,19 +928,6 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		panel->last_bl_lvl = bl_temp;
 		return rc;
 	}
-#elif defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	if (0 == bl_lvl)
-		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DIMMINGOFF);
-
-	if (panel->bl_config.bl_remap_flag && panel->bl_config.brightness_max_level
-		&& panel->bl_config.bl_max_level) {
-		/* map UI brightness into driver backlight level
-		*    y = kx+b;
-		*/
-		bl_temp = (panel->bl_config.bl_max_level - panel->bl_config.bl_min_level)*bl_lvl/panel->bl_config.brightness_max_level
-					+ panel->bl_config.bl_min_level;
-	} else
-		bl_temp = bl_lvl;
 #endif
 
 	switch (bl->type) {
@@ -1036,7 +959,7 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		rc = -ENOTSUPP;
 	}
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 	if ((panel->last_bl_lvl == 0 || (panel->skip_dimmingon == STATE_DIM_RESTORE)) && bl_temp) {
 		if (panel->panel_on_dimming_delay)
 			schedule_delayed_work(&panel->cmds_work,
@@ -1057,17 +980,6 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 	} else {
 		panel->last_bl_lvl = bl_temp;
 	}
-#elif defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	if ((panel->last_bl_lvl == 0 || (panel->skip_dimmingon == STATE_DIM_RESTORE)) && bl_lvl) {
-		if (panel->panel_on_dimming_delay)
-			schedule_delayed_work(&panel->cmds_work,
-				msecs_to_jiffies(panel->panel_on_dimming_delay));
-
-		if (panel->skip_dimmingon == STATE_DIM_RESTORE)
-			panel->skip_dimmingon = STATE_NONE;
-	}
-
-	panel->last_bl_lvl = bl_lvl;
 #endif
 
 	return rc;
@@ -2198,9 +2110,7 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-crc-dcip3-on-command",
 	"qcom,mdss-dsi-dispparam-crc-off-command",
 	"qcom,mdss-dsi-dispparam-elvss-dimming-off-command",
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	"mi,mdss-dsi-read-lockdown-info-command",
-#endif
 #endif
 };
 
@@ -2286,9 +2196,7 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-crc-dcip3-on-command-state",
 	"qcom,mdss-dsi-dispparam-crc-off-command-state",
 	"qcom,mdss-dsi-dispparam-elvss-dimming-off-command-state",
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	"mi,mdss-dsi-read-lockdown-info-command-state",
-#endif
 #endif
 };
 
@@ -3655,7 +3563,6 @@ int dsi_panel_parse_elvss_dimming_read_configs(struct dsi_panel *panel)
 		return -EINVAL;
 	}
 
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	dsi_panel_parse_cmd_sets_sub(&panel->hbm_fod_off_doze_hbm_on,
 				DSI_CMD_SET_DISP_HBM_FOD_OFF_DOZE_HBM_ON, utils);
 	if (!panel->hbm_fod_off_doze_hbm_on.count) {
@@ -3669,7 +3576,6 @@ int dsi_panel_parse_elvss_dimming_read_configs(struct dsi_panel *panel)
 		pr_err("hbm fod off doze lbm on command parsing failed\n");
 		return -EINVAL;
 	}
-#endif
 	return 0;
 }
 
@@ -3908,34 +3814,6 @@ error:
 	return rc;
 }
 
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-static void dsi_panel_esd_irq_ctrl(struct dsi_panel *panel,
-				  bool enable)
-{
-	struct drm_panel_esd_config *esd_config;
-	struct irq_desc *desc;
-
-	if (!panel || !panel->panel_initialized) {
-		pr_err("[LCD] panel not ready!\n");
-		return;
-	}
-
-	esd_config = &panel->esd_config;
-	if (gpio_is_valid(esd_config->esd_err_irq_gpio)) {
-		if (esd_config->esd_err_irq) {
-			if (enable) {
-				desc = irq_to_desc(esd_config->esd_err_irq);
-				if (!irq_settings_is_level(desc))
-					desc->istate &= ~IRQS_PENDING;
-				enable_irq(esd_config->esd_err_irq);
-			} else {
-				disable_irq_nosync(esd_config->esd_err_irq);
-			}
-		}
-	}
-}
-#endif
-
 static void dsi_panel_update_util(struct dsi_panel *panel,
 				  struct device_node *parser_node)
 {
@@ -3974,7 +3852,6 @@ static void panelon_dimming_enable_delayed_work(struct work_struct *work)
 	}
 }
 
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 static void panelon_fod_enable_delayed_work(struct work_struct *work)
 {
 	struct dsi_panel *panel = container_of(work,
@@ -3995,7 +3872,6 @@ static void panelon_fod_enable_delayed_work(struct work_struct *work)
 		mutex_unlock(&display->display_lock);
 	}
 }
-#endif
 
 static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 				     struct device_node *of_node)
@@ -4030,9 +3906,7 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	}
 
 	INIT_DELAYED_WORK(&panel->cmds_work, panelon_dimming_enable_delayed_work);
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	INIT_DELAYED_WORK(&panel->fod_work, panelon_fod_enable_delayed_work);
-#endif
 
 	rc = utils->read_u32(of_node,
 			"qcom,disp-doze-backlight-threshold", &panel->doze_backlight_threshold);
@@ -4080,9 +3954,7 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	dsi_panel_parse_elvss_dimming_config(panel);
 
 	panel->fod_hbm_enabled = false;
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	panel->fod_dimlayer_hbm_enabled = false;
-#endif
 	panel->skip_dimmingon = STATE_NONE;
 	panel->fod_backlight_flag = false;
 	panel->backlight_delta = 1;
@@ -4316,132 +4188,6 @@ static int dsi_display_write_panel(struct dsi_panel *panel,
 	}
 error:
 	return rc;
-}
-#endif
-
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-ssize_t mipi_reg_write(char *buf, size_t count)
-{
-	struct dsi_panel *panel = g_panel;
-	struct dsi_panel_cmd_set cmd_sets = {0};
-	int retval = 0, dlen = 0;
-	u32 packet_count = 0;
-	char *input = NULL, *data = NULL;
-	char pbuf[3] = {0};
-	u32 tmp_data = 0;
-
-	mutex_lock(&panel->panel_lock);
-
-	if (!panel || !panel->panel_initialized) {
-		pr_err("[LCD] panel not ready!\n");
-		retval = -EAGAIN;
-		goto exit_unlock;
-	}
-
-	input = buf;
-	memcpy(pbuf, input, 2);
-	pbuf[2] = '\0';
-	retval = kstrtou32(pbuf, 10, &tmp_data);
-	if (retval)
-		goto exit_unlock;
-	read_reg.enabled = !!tmp_data;
-	input = input + 3;
-	memcpy(pbuf, input, 2);
-	pbuf[2] = '\0';
-	retval = kstrtou32(pbuf, 10, &tmp_data);
-	if (retval)
-		goto exit_unlock;
-	if (read_reg.enabled && !tmp_data) {
-		retval = -EINVAL;
-		goto exit_unlock;
-	}
-	read_reg.cmds_rlen = tmp_data;
-	input = input + 3;
-
-	data = kzalloc(count - 6, GFP_KERNEL);
-	if (!data) {
-		retval = -ENOMEM;
-		goto exit_unlock;
-	}
-	data[count-6-1] = '\0';
-	dlen = string_merge_into_buf(input, count - 6, data);
-	if (dlen <= 0)
-		goto exit_free1;
-	retval = dsi_panel_get_cmd_pkt_count(data, dlen, &packet_count);
-	if (!packet_count) {
-		pr_err("%s: get pkt count failed!\n", __func__);
-		goto exit_free1;
-	}
-
-	retval = dsi_panel_alloc_cmd_packets(&cmd_sets, packet_count);
-	if (retval) {
-		pr_err("%s: failed to allocate cmd packets, ret=%d\n", __func__, retval);
-		goto exit_free1;
-	}
-
-	retval = dsi_panel_create_cmd_packets(data, dlen, packet_count,
-						  cmd_sets.cmds);
-	if (retval) {
-		pr_err("%s: failed to create cmd packets, ret=%d\n", __func__, retval);
-		goto exit_free2;
-	}
-
-	if (read_reg.enabled) {
-		read_reg.read_cmd = cmd_sets;
-		retval = dsi_display_read_panel(panel, &read_reg);
-		if (retval <= 0) {
-			pr_err("%s: [%s]failed to read cmds, rc=%d\n", __func__, panel->name, retval);
-			goto exit_free3;
-		}
-	} else {
-		read_reg.read_cmd = cmd_sets;
-		retval = dsi_display_write_panel(panel, &cmd_sets);
-		if (retval) {
-			pr_err("%s: [%s] failed to send cmds, rc=%d\n", __func__, panel->name, retval);
-			goto exit_free3;
-		}
-	}
-
-	pr_debug("[%s]: mipi_procfs_write done!\n", panel->name);
-	retval = count;
-
-exit_free3:
-	dsi_panel_destroy_cmd_packets(&cmd_sets);
-exit_free2:
-	dsi_panel_dealloc_cmd_packets(&cmd_sets);
-exit_free1:
-	kfree(data);
-exit_unlock:
-	mutex_unlock(&panel->panel_lock);
-	return retval;
-}
-
-ssize_t mipi_reg_read(char *buf)
-{
-	struct dsi_panel *panel = g_panel;
-	int i = 0;
-	ssize_t count = 0;
-
-	mutex_lock(&panel->panel_lock);
-	if (!panel) {
-		mutex_unlock(&panel->panel_lock);
-		return -EAGAIN;
-	}
-
-	if (read_reg.enabled) {
-		for (i = 0; i < read_reg.cmds_rlen; i++) {
-			if (i == read_reg.cmds_rlen - 1) {
-				count += snprintf(buf + count, PAGE_SIZE - count, "0x%02x\n",
-				     read_reg.rbuf[i]);
-			} else {
-				count += snprintf(buf + count, PAGE_SIZE - count, "0x%02x ",
-				     read_reg.rbuf[i]);
-			}
-		}
-	}
-	mutex_unlock(&panel->panel_lock);
-
-	return count;
 }
 #endif
 
@@ -5037,48 +4783,6 @@ int dsi_panel_set_lp1(struct dsi_panel *panel)
 	if (rc)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_LP1 cmd, rc=%d\n",
 		       panel->name, rc);
-
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	if (panel->fod_hbm_enabled || panel->fod_backlight_flag) {
-		pr_info("%s skip [hbm=%d][fod_bl=%d]\n", __func__,
-			panel->fod_hbm_enabled, panel->fod_backlight_flag);
-	} else {
-		struct dsi_display *display = NULL;
-		struct mipi_dsi_host *host = panel->host;
-		if (host)
-			display = container_of(host, struct dsi_display, host);
-
-		if (panel->last_bl_lvl > panel->doze_backlight_threshold) {
-			pr_info("dsi_panel_set_lp1 DSI_CMD_SET_DOZE_HBM");
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DOZE_HBM);
-			if (rc)
-				pr_err("[%s] failed to send DSI_CMD_SET_DOZE_HBM cmd, rc=%d\n",
-					   panel->name, rc);
-			if (display)
-				display->drm_dev->doze_brightness = DOZE_BRIGHTNESS_HBM;
-
-			panel->in_aod = true;
-			panel->skip_dimmingon = STATE_DIM_BLOCK;
-		} else if (panel->last_bl_lvl <= panel->doze_backlight_threshold && panel->last_bl_lvl > 0) {
-			pr_info("dsi_panel_set_lp1 DSI_CMD_SET_DOZE_LBM");
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DOZE_LBM);
-			if (rc)
-				pr_err("[%s] failed to send DSI_CMD_SET_DOZE_LBM cmd, rc=%d\n",
-					   panel->name, rc);
-
-			if (display)
-				display->drm_dev->doze_brightness = DOZE_BRIGHTNESS_LBM;
-
-			panel->in_aod = true;
-			panel->skip_dimmingon = STATE_DIM_BLOCK;
-		} else {
-			pr_info("dsi_panel_set_lp1 DOZE_BRIGHTNESS_INVALID");
-			if (display)
-				display->drm_dev->doze_brightness = DOZE_BRIGHTNESS_INVALID;
-		}
-	}
-#endif
-
 exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -5125,7 +4829,7 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 
 	mutex_lock(&panel->panel_lock);
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 	if (!panel->fod_hbm_enabled && !panel->fod_dimlayer_hbm_enabled) {
 		if (panel->fodflag) {
 			pr_info("%s fod_dimlayer_bl_block\n", __func__);
@@ -5137,18 +4841,8 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 		panel->skip_dimmingon = STATE_NONE;
 	} else
 		pr_info("%s skip\n", __func__);
-#elif defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	if (!panel->fod_hbm_enabled) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
-			       panel->name, rc);
-		panel->skip_dimmingon = STATE_NONE;
-	} else
-		pr_info("%s skip\n", __func__);
-#endif
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150)
+
 	panel->in_aod = false;
 #endif
 
@@ -5163,12 +4857,10 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 	     panel->power_mode == SDE_MODE_DPMS_LP2))
 		dsi_pwr_panel_regulator_mode_set(&panel->power_info,
 			"ibb", REGULATOR_MODE_NORMAL);
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && !defined(CONFIG_MACH_XIAOMI_RAPHAEL)
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
 	if (rc)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
 		       panel->name, rc);
-#endif
 exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -5415,54 +5107,6 @@ int dsi_panel_pre_mode_switch_to_cmd(struct dsi_panel *panel)
 	return rc;
 }
 
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-static char string_to_hex(const char *str)
-{
-	char val_l = 0;
-	char val_h = 0;
-
-	if (str[0] >= '0' && str[0] <= '9')
-		val_h = str[0] - '0';
-	else if (str[0] <= 'f' && str[0] >= 'a')
-		val_h = 10 + str[0] - 'a';
-	else if (str[0] <= 'F' && str[0] >= 'A')
-		val_h = 10 + str[0] - 'A';
-
-	if (str[1] >= '0' && str[1] <= '9')
-		val_l = str[1]-'0';
-	else if (str[1] <= 'f' && str[1] >= 'a')
-		val_l = 10 + str[1] - 'a';
-	else if (str[1] <= 'F' && str[1] >= 'A')
-		val_l = 10 + str[1] - 'A';
-
-	return (val_h << 4) | val_l;
-}
-
-static int string_merge_into_buf(const char *str, int len, char *buf)
-{
-	int buf_size = 0;
-	int i = 0;
-	const char *p = str;
-
-	while (i < len) {
-		if (((p[0] >= '0' && p[0] <= '9') ||
-			(p[0] <= 'f' && p[0] >= 'a') ||
-			(p[0] <= 'F' && p[0] >= 'A'))
-			&& ((i + 1) < len)) {
-			buf[buf_size] = string_to_hex(p);
-			pr_debug("0x%02x ", buf[buf_size]);
-			buf_size++;
-			i += 2;
-			p += 2;
-		} else {
-			i++;
-			p++;
-		}
-	}
-	return buf_size;
-}
-#endif
-
 #if defined(CONFIG_MACH_XIAOMI_SM8150)
 static int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 {
@@ -5477,10 +5121,7 @@ static int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	if (!panel->panel_initialized
 		&& (param & 0x0F000000) != DISPPARAM_FOD_BACKLIGHT_ON
 		&& (param & 0x0F000000) != DISPPARAM_FOD_BACKLIGHT_OFF
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
-		&& (param & 0x0F0000) != DISPPARAN_FOD_FLAG
-#endif
-		) {
+		&& (param & 0x0F0000) != DISPPARAN_FOD_FLAG) {
 		pr_err("[LCD] panel not ready!\n");
 		mutex_unlock(&panel->panel_lock);
 		return rc;
@@ -5737,7 +5378,6 @@ static int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		panel->dc_enable = false;
 		panel->crc_flag = true;
 		break;
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	case DISPPARAN_FOD_FLAG:
 		panel->fodflag = param & 0x1;
 		if (panel->fodflag == 0 && panel->panel_initialized) {
@@ -5746,7 +5386,6 @@ static int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		}
 		pr_info("fod flag:%d\n", panel->fodflag);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -6053,18 +5692,12 @@ int dsi_panel_enable(struct dsi_panel *panel)
 
 #if defined(CONFIG_MACH_XIAOMI_SM8150)
 	panel->fod_hbm_enabled = false;
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	panel->fod_dimlayer_hbm_enabled = false;
-#endif
 	panel->in_aod = false;
 	panel->skip_dimmingon = STATE_NONE;
 	panel->last_bl_lvl = 1 ;
 
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	dsi_panel_esd_irq_ctrl(panel, true);
-#endif
 
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	if (panel->fodflag) {
 		pr_info("%s fod_dimlayer_bl_block\n", __func__);
 		dsi_panel_update_backlight(panel, 0);
@@ -6072,7 +5705,6 @@ int dsi_panel_enable(struct dsi_panel *panel)
 
 		schedule_delayed_work(&panel->fod_work, msecs_to_jiffies(150));
 	}
-#endif
 #endif
 
 	mutex_unlock(&panel->panel_lock);
@@ -6138,10 +5770,6 @@ int dsi_panel_disable(struct dsi_panel *panel)
 
 	mutex_lock(&panel->panel_lock);
 
-#if defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	dsi_panel_esd_irq_ctrl(panel, false);
-#endif
-
 	/* Avoid sending panel off commands when ESD recovery is underway */
 	if (!atomic_read(&panel->esd_recovery_pending)) {
 #if defined(CONFIG_MACH_XIAOMI_SM8150)
@@ -6174,9 +5802,7 @@ int dsi_panel_disable(struct dsi_panel *panel)
 #if defined(CONFIG_MACH_XIAOMI_SM8150)
 	panel->skip_dimmingon = STATE_NONE;
 	panel->fod_hbm_enabled = false;
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 	panel->fod_dimlayer_hbm_enabled = false;
-#endif
 	panel->in_aod = false;
 	panel->fod_backlight_flag = false;
 #endif
@@ -6259,7 +5885,7 @@ error:
 	return rc;
 }
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 static int dsi_panel_get_lockdown_from_cmdline(unsigned char *plockdowninfo)
 {
 	int ret = -1;
@@ -6484,55 +6110,4 @@ void dsi_panel_doubleclick_enable(bool on)
 	g_panel->tddi_doubleclick_flag = on;
 }
 EXPORT_SYMBOL(dsi_panel_doubleclick_enable);
-#elif defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-ssize_t dsi_panel_disp_count_get(struct dsi_display *display, char *buf)
-{
-	int ret = -1;
-	struct timespec64 now_boot;
-	u64 record_end = 0;
-	/* struct timespec rtctime; */
-	struct dsi_panel *panel = NULL;
-
-	if (!display || !display->panel || !display->drm_dev) {
-		pr_err("invalid display/panel/drm_dev\n");
-		return -EINVAL;
-	}
-
-	if (buf == NULL) {
-		pr_err("dsi_panel_disp_count_get buffer is NULL!\n");
-		return -EINVAL;
-	}
-
-	panel = display->panel;
-	get_monotonic_boottime64(&now_boot);
-	/* getnstimeofday(&rtctime); */
-
-	ret = scnprintf(buf, PAGE_SIZE,
-		"panel_active=%llu\n"
-		"panel_kickoff_count=%llu\n"
-		"kernel_boottime=%llu\n"
-		"kernel_rtctime=%llu\n"
-		"kernel_days=%llu\n"
-		"bl_duration=%llu\n"
-		"bl_level_integral=%llu\n"
-		"bl_highlevel_duration=%llu\n"
-		"bl_lowlevel_duration=%llu\n"
-		"hbm_duration=%llu\n"
-		"hbm_times=%llu\n"
-		"record_end=%llu\n",
-		panel->panel_active,
-		panel->kickoff_count,
-		panel->boottime + now_boot.tv_sec,
-		panel->bootRTCtime,
-		panel->bootdays,
-		panel->bl_duration,
-		panel->bl_level_integral,
-		panel->bl_highlevel_duration,
-		panel->bl_lowlevel_duration,
-		panel->hbm_duration,
-		panel->hbm_times,
-		record_end);
-
-	return ret;
-}
 #endif

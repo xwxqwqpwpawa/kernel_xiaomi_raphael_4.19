@@ -394,9 +394,10 @@ static int dsi_bridge_get_panel_info(struct drm_bridge *bridge, char *buf)
 	return rc;
 }
 
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 int dsi_panel_set_doze_backlight(struct dsi_display *display);
+
 ssize_t dsi_panel_get_doze_backlight(struct dsi_display *display, char *buf);
+
 int dsi_bridge_disp_set_doze_backlight(struct drm_connector *connector,
 			int doze_backlight)
 {
@@ -439,7 +440,6 @@ ssize_t dsi_bridge_disp_get_doze_backlight(struct drm_connector *connector,
 
 	return dsi_panel_get_doze_backlight(display, buf);
 }
-#endif
 #endif
 
 static void dsi_bridge_enable(struct drm_bridge *bridge)

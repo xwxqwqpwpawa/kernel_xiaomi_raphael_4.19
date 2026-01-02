@@ -642,11 +642,7 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 		void *display, u32 bl_lvl);
 
 #if defined(CONFIG_MACH_XIAOMI_SM8150)
-#if defined(CONFIG_MACH_XIAOMI_VAYU)
 int dsi_panel_set_doze_backlight(struct dsi_display *display);
-#elif defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-int dsi_panel_set_doze_backlight(struct dsi_display *display, u32 bl_lvl);
-#endif
 ssize_t dsi_panel_get_doze_backlight(struct dsi_display *display, char *buf);
 #endif
 

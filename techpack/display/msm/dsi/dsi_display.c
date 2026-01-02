@@ -248,26 +248,10 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 		goto error;
 	}
 
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_RAPHAEL)
-	if (drm_dev && (drm_dev->doze_state == DRM_BLANK_LP1 || drm_dev->doze_state == DRM_BLANK_LP2)) {
-		rc = dsi_panel_set_doze_backlight(display, (u32)bl_temp);
-		if (rc)
-			pr_err("unable to set doze backlight\n");
-		rc = dsi_panel_enable_doze_backlight(panel, (u32)bl_temp);
-		if (rc)
-			pr_err("unable to enable doze backlight\n");
-	} else {
-		drm_dev->doze_brightness = DOZE_BRIGHTNESS_INVALID;
-		rc = dsi_panel_set_backlight(panel, (u32)bl_temp);
-		if (rc)
-			pr_err("unable to set backlight\n");
-	}
-#else
 	rc = dsi_panel_set_backlight(panel, (u32)bl_temp);
 	if (rc)
 		DSI_ERR("unable to set backlight\n");
-#endif
-#if defined(CONFIG_MACH_XIAOMI_SM8150) && defined(CONFIG_MACH_XIAOMI_VAYU)
+#if defined(CONFIG_MACH_XIAOMI_SM8150)
 	else
 		DSI_DEBUG("set backlight successfully at: bl_scale = %u, bl_scale_sv = %u, bl_lvl = %u\n", bl_scale, bl_scale_sv, (u32)bl_temp);
 #endif
@@ -1275,10 +1259,8 @@ int dsi_display_set_power(struct drm_connector *connector,
 #endif
 		rc = dsi_panel_set_lp1(display->panel);
 #if defined(CONFIG_MACH_XIAOMI_SM8150)
-#if !defined(CONFIG_MACH_XIAOMI_RAPHAEL)
 		if (!rc)
 			dsi_panel_set_doze_backlight(display);
-#endif
 		drm_notifier_call_chain(DRM_EVENT_BLANK, &g_notify_data);
 #endif
 		break;
