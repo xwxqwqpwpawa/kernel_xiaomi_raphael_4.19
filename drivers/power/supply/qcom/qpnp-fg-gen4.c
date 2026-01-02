@@ -4612,51 +4612,6 @@ static void ds_page0_work(struct work_struct *work)
 			pval.arrayval[12], pval.arrayval[13], pval.arrayval[14], pval.arrayval[15]);
 	}
 }
-
-#define MAX_CYCLE_COUNT_CHECK 5
-static int sync_cycle_count(struct fg_gen4_chip *chip)
-{
-	struct fg_dev *fg = &chip->fg;
-	union power_supply_propval prop = {0, };
-	static int cycle_count_check;
-	int cycle_count;
-
-	get_cycle_count(chip->counter, &cycle_count);
-	if (!fg->max_verify_psy) {
-		fg->max_verify_psy = power_supply_get_by_name("batt_verify");
-		if (!fg->max_verify_psy) {
-			pr_err("Could not find batt_verify_psy\n");
-			return -ENODEV;
-		}
-	}
-
-	if (fg->cycle_count == INT_MIN) {
-		if (cycle_count || cycle_count_check > MAX_CYCLE_COUNT_CHECK)
-			fg->cycle_count = cycle_count;
-		else
-			cycle_count_check++;
-	}
-
-	if (fg->maxim_cycle_count == INT_MIN) {
-		power_supply_get_property(fg->max_verify_psy,
-				POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT, &prop);
-		fg->maxim_cycle_count = prop.intval;
-	}
-
-	if (fg->cycle_count != INT_MIN && fg->cycle_count < cycle_count) {
-		prop.intval = 1;
-		power_supply_set_property(fg->max_verify_psy,
-				POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT, &prop);
-		power_supply_get_property(fg->max_verify_psy,
-				POWER_SUPPLY_PROP_MAXIM_BATT_CYCLE_COUNT, &prop);
-		fg->maxim_cycle_count = prop.intval;
-		pr_info("fg cycle_count[%d], last cycle_count[%d], dc_value[%d]\n",
-					cycle_count, fg->cycle_count, fg->maxim_cycle_count);
-		fg->cycle_count++;
-	}
-
-	return 0;
-}
 #endif
 #endif
 
@@ -4734,10 +4689,6 @@ static void status_change_work(struct work_struct *work)
 		fg->charge_status, fg->charge_done, (input_present & (!input_suspend)));
 #else
 		fg->charge_status, fg->charge_done, input_present);
-#endif
-
-#ifdef CONFIG_BATT_VERIFY_BY_DS28E16
-	sync_cycle_count(chip);
 #endif
 
 	batt_soc_cp = div64_u64((u64)(u32)batt_soc * CENTI_FULL_SOC,
@@ -5446,11 +5397,7 @@ static int fg_psy_get_property(struct power_supply *psy,
 		rc = fg_gen4_get_charge_counter_shadow(chip, &pval->intval);
 		break;
 	case POWER_SUPPLY_PROP_CYCLE_COUNT:
-#ifdef CONFIG_BATT_VERIFY_BY_DS28E16
-		pval->intval = fg->maxim_cycle_count;
-#else
 		rc = get_cycle_count(chip->counter, &pval->intval);
-#endif
 		break;
 	case POWER_SUPPLY_PROP_CYCLE_COUNTS:
 		rc = get_cycle_counts(chip->counter, &pval->strval);
@@ -7696,8 +7643,6 @@ static int fg_gen4_probe(struct platform_device *pdev)
 #if defined(CONFIG_MACH_XIAOMI_VAYU) || defined(CONFIG_MACH_XIAOMI_NABU)
 	fg->fake_authentic = -EINVAL;
 	fg->fake_chip_ok = -EINVAL;
-	fg->cycle_count = INT_MIN;
-	fg->maxim_cycle_count = INT_MIN;
 	fg->batt_fake_temp = -EINVAL;
 	chip->battery_authentic_result = -EINVAL;
 #ifdef CONFIG_MACH_XIAOMI_NABU
