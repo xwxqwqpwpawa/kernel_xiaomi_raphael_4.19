@@ -1822,13 +1822,10 @@ static int goodix_bl_state_chg_callback(struct notifier_block *nb,
 	struct goodix_ts_core *core_data =
 		container_of(nb, struct goodix_ts_core, bl_notifier);
 	unsigned int blank;
-	if (val != BACKLIGHT_UPDATED)
-		return NOTIFY_OK;
 	if (data && core_data) {
 		blank = *(int *)(data);
 		ts_info("%s val:%lu, blank:%u\n", __func__, val, blank);
-		if (blank == BACKLIGHT_OFF &&
-		    (atomic_read(&core_data->suspend_stat) &&
+		if ((atomic_read(&core_data->suspend_stat) &&
 		     core_data->fod_status)) {
 			ts_info("%s BACKLIGHT OFF, disable irq\n", __func__);
 			goodix_ts_irq_enable(core_data, false);
