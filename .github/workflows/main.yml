@@ -18,4 +18,4 @@ jobs:
           aosp-gcc: true
           aosp-clang: true
           android-version: 16
-          aosp-clang-version: r584948
+          aosp-clang-version: r547379
