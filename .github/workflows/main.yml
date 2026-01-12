@@ -19,3 +19,10 @@ jobs:
           aosp-clang: true
           android-version: 12
           aosp-clang-version: r383902
+          ksu: true
+          ksu-version: v3.0.0-30-legacy
+          ksu-lkm: true
+          ksu-other: true
+          ksu-url: https://github.com/rsuntk/KernelSU/
+          lxc: true
+          anykernel3: true
