@@ -21,7 +21,7 @@ jobs:
           aosp-clang-version: r383902
           ksu: true
           ksu-version: v3.0.0-30-legacy
-          ksu-lkm: true
+          ksu-lkm: false
           ksu-other: true
           ksu-url: https://github.com/rsuntk/KernelSU/
           lxc: true
